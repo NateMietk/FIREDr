@@ -7,7 +7,7 @@
 #
 
 
-load_aoi <- function(url, dir, layer, ext, outname) {
+get_mask <- function(url, dir, layer, ext, outname) {
   require(sf)
   file <- paste0(dir, "/", layer, ".", ext)
 
