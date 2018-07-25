@@ -11,7 +11,7 @@
 #                   "Burn Date", "Burn Date Uncertainty", "QA", "First Day", "Last Day"
 #
 
-convert_hdf_tif <- function(tiles, n_cores = 1, layer_names) {
+convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names) {
   require(parallel)
 
   cl <- parallel::makeCluster(n_cores)
@@ -19,7 +19,7 @@ convert_hdf_tif <- function(tiles, n_cores = 1, layer_names) {
 
   foreach (j = 1:length(tiles), .packages = c('gdalUtils', 'tidyverse', 'raster')) %dopar% {
 
-    raw_dates <- function(input_raster, output = tif_months) {
+    raw_dates <- function(input_raster, output = out_dir) {
 
       month_range <- strsplit(input_raster, "\\_") %>%
         lapply(`[`, 2) %>%
@@ -35,7 +35,7 @@ convert_hdf_tif <- function(tiles, n_cores = 1, layer_names) {
     }
 
     # make list of all hdf files for the aoi and time range
-    hdfs <- list.files(hdf_months, pattern = ".hdf",
+    hdfs <- list.files(in_dir, pattern = ".hdf",
                       recursive = TRUE)
 
     # split the native filename into a more readable format
@@ -49,11 +49,11 @@ convert_hdf_tif <- function(tiles, n_cores = 1, layer_names) {
     outname <- paste0(names, "_", filename, ".tif")
 
     # make list of all hdf files and full path name
-    hdfs_full = list.files(hdf_months, pattern = ".hdf",
+    hdfs_full = list.files(in_dir, pattern = ".hdf",
                            recursive = TRUE, full.names = TRUE)
 
     for (i in 1:length(hdfs_full)) {
-      if(!file.exists(paste0(tif_months, "/", outname[i]))) {
+      if(!file.exists(paste0(out_dir, "/", outname[i]))) {
 
         # get the subdatasets from the hdf file
         sds <- gdalUtils::get_subdatasets(hdfs_full[i])
@@ -61,7 +61,7 @@ convert_hdf_tif <- function(tiles, n_cores = 1, layer_names) {
         for (d in 1:length(layer_names)) {
 
           # unpack the subdatasets based on name stored in object d
-          gdalUtils::gdal_translate(sds[d], dst_dataset = paste0(tif_months, "/", outname[i]))
+          gdalUtils::gdal_translate(sds[d], dst_dataset = paste0(out_dir, "/", outname[i]))
 
           raw_dates(outname[i])
         }
