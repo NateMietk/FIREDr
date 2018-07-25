@@ -8,6 +8,7 @@
 #     u_p = The username and password toenter the ftp site
 #           Formatted as username:password
 #     out_dir = The directory to house all the downloaded tiles
+#     url = Set to "ftp://fire:burnt@fuoco.geog.umd.edu/MCD64A1/C6/" by default, but can be changed to different collections
 #
 # Future capabilities: Add custom date ranges for download
 
