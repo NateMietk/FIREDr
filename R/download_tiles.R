@@ -11,7 +11,8 @@
 #
 # Future capabilities: Add custom date ranges for download
 
-download_tiles <- function(tiles, url, u_p, out_dir){
+download_tiles <- function(tiles, url, u_p, out_dir, url = "ftp://fire:burnt@fuoco.geog.umd.edu/MCD64A1/C6/", u_p = "fire:burnt") {
+
   require(tidyverse)
 
   for (j in 1:length(tiles)){
