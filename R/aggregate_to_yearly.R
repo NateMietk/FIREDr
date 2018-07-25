@@ -11,7 +11,7 @@
 #
 # Future capabilities: Add custom date ranges for download
 
-aggreate_to_yearly <- function(tiles, n_cores = 1, year_range, in_dir, out_dir, funs = 'max') {
+aggreate_to_yearly <- function(tiles, n_cores = 1, year_range, in_dir, out_dir) {
   require(parallel)
 
   cl <- parallel::makeCluster(n_cores)
@@ -24,7 +24,7 @@ aggreate_to_yearly <- function(tiles, n_cores = 1, year_range, in_dir, out_dir, 
 
       if(!file.exists(paste(out_dir, "/Yearly_BD_", tiles[j], "_", i, ".tif", sep=""))){
         fire <- raster::stack(tile_files) %>%
-          raster::calc(., fun = funs)
+          raster::calc(., fun = max)
 
         tfilename = paste(out_dir, "/Yearly_BD_", tiles[j], "_", i, ".tif", sep="")
 
