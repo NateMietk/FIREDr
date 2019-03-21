@@ -27,3 +27,4 @@ vignettes/*.pdf
 packrat/lib*/
 # User files
 .DS_Store
+MODISr.Rproj
