@@ -12,7 +12,7 @@
 #
 # Future capabilities: Add custom date ranges for download
 
-download_tiles <- function(tiles, url = "ftp://fire:burnt@fuoco.geog.umd.edu/MCD64A1/C6/", u_p = "fire:burnt", out_dir) {
+download_tiles <- function(tiles, url = "ftp://fire:burnt@fuoco.geog.umd.edu/gfed4/MCD64A1/C6/", u_p = "fire:burnt", out_dir) {
 
   require(tidyverse)
 
