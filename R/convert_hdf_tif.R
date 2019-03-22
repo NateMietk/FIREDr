@@ -29,6 +29,14 @@ convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names) {
 
       ras <- raster(file.path(output, input_raster)) %>%
         raster::reclassify(mtrx)
+      
+      year <- str_extract(input_raster, "\\d{4}")
+
+      convert_to_julian<-function(year = year, day){
+        return(as.numeric(as.Date(paste(year,day,sep="-"), "%Y-%j")))
+      }
+      
+      ras <- calc(ras, FUN = function(x) convert_to_julian(x))
 
       writeRaster(ras, file.path(output, input_raster), format = "GTiff", overwrite=TRUE)
 
