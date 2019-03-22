@@ -11,13 +11,9 @@
 #                   "Burn Date", "Burn Date Uncertainty", "QA", "First Day", "Last Day"
 #
 
-convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, search_gdal = FALSE) {
+convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, convert_zero_to_na = TRUE) {
   require(parallel)
-  
-  if(search_gdal == TRUE) {
-    gdal_setInstallation()
-  }
-  
+
   cl <- parallel::makeCluster(n_cores)
   registerDoParallel(cl)
 
@@ -29,7 +25,11 @@ convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, se
         lapply(`[`, 2) %>%
         substr(6, 8)
 
-      mtrx <- matrix(c(-Inf, 1, 0, 367, Inf, 0), byrow=TRUE, ncol=3)
+      if(convert_zero_to_na == TRUE) {
+        mtrx <- matrix(c(-Inf, 1, NA, 367, Inf, NA), byrow=TRUE, ncol=3)
+      } else {
+        mtrx <- matrix(c(-Inf, 1, 0, 367, Inf, 0), byrow=TRUE, ncol=3)
+      }
 
       ras <- raster(file.path(output, input_raster)) %>%
         raster::reclassify(mtrx)
