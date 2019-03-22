@@ -11,9 +11,13 @@
 #                   "Burn Date", "Burn Date Uncertainty", "QA", "First Day", "Last Day"
 #
 
-convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names) {
+convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, search_gdal = FALSE) {
   require(parallel)
-
+  
+  if(search_gdal == TRUE) {
+    gdal_setInstallation()
+  }
+  
   cl <- parallel::makeCluster(n_cores)
   registerDoParallel(cl)
 
@@ -30,9 +34,7 @@ convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names) {
       ras <- raster(file.path(output, input_raster)) %>%
         raster::reclassify(mtrx)
       
-      year <- str_extract(input_raster, "\\d{4}")
-
-      convert_to_julian<-function(year = year, day){
+      convert_to_julian<-function(year = str_extract(input_raster, "\\d{4}"), day){
         return(as.numeric(as.Date(paste(as.numeric(year), day, sep="-"), "%Y-%j")))
       }
       
@@ -54,12 +56,11 @@ convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names) {
     rm(hdfs)
 
     # create the final name to be written out
-    outname <- paste0(names, "_", filename, ".tif")
+    outname <- paste0(layer_names, "_", filename, ".tif")
 
     # make list of all hdf files and full path name
     hdfs_full = list.files(in_dir, pattern = ".hdf",
                            recursive = TRUE, full.names = TRUE)
-
     for (i in 1:length(hdfs_full)) {
       if(!file.exists(paste0(out_dir, "/", outname[i]))) {
 
