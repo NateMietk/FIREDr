@@ -54,10 +54,6 @@ download_tiles <- function(tiles, url = "ftp://fire:burnt@fuoco.geog.umd.edu/gfe
         # add warning if the downloaded file is a fragment of the source file
         warning(paste('Mismatch in file size found for', dir_listing$filename[i]))
 
-        # write the name of the fragement to an output dataframe
-        res <- res %>%
-          mutate(source_file = dir_listing$filename[i])
-
         # delete the fragment file
         unlink(dir_listing$filename[i])
         }
