@@ -10,17 +10,17 @@ License: MIT
 Encoding: UTF-8
 LazyData: true
 Imports:
-    tidyverse,  
+    assertthat, 
     dplyr,
+    gdalUtils, 
+    doParallel, 
+    foreach,
+    lubridate,
     magrittr, 
+    parallel,
     raster, 
     RCurl, 
-    gdalUtils, 
-    foreach, 
-    doParallel, 
     sf, 
-    assertthat, 
-    lubridate,
-    parallel,
+    snow,
     stringr,
-    snow
+    tidyverse
