@@ -12,12 +12,17 @@
 #
 
 convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, convert_zero_to_na = TRUE) {
-  require(parallel)
-
+  requireNamespace(parallel)
+  requireNamespace(raster)
+  requireNamespace(stringr)
+  requireNamespace(gdalUtils)
+  requireNamespace(tidyverse)
+  requireNamespace(foreach)
+  
   cl <- parallel::makeCluster(n_cores)
-  registerDoParallel(cl)
+  doParallel::registerDoParallel(cl)
 
-  foreach (j = 1:length(tiles), .packages = c('gdalUtils', 'tidyverse', 'raster')) %dopar% {
+  foreach (j = 1:length(tiles), .packages = c('gdalUtils', 'tidyverse', 'raster', 'stringi')) %dopar% {
 
     raw_dates <- function(input_raster, output = out_dir) {
 

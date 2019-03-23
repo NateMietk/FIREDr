@@ -8,7 +8,7 @@
 
 
 get_mask <- function(url, dir, layer, ext, outname) {
-  require(sf)
+  requireNamespace(sf)
   file <- paste0(dir, "/", layer, ".", ext)
 
   if (!file.exists(file)) {

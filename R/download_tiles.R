@@ -14,7 +14,8 @@
 
 download_tiles <- function(tiles, url = "ftp://fire:burnt@fuoco.geog.umd.edu/gfed4/MCD64A1/C6/", u_p = "fire:burnt", out_dir) {
 
-  require(tidyverse)
+  requireNamespace(tidyverse)
+  requireNamespace(RCurl)
 
   for (j in 1:length(tiles)){
 

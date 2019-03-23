@@ -19,7 +19,7 @@ mosaic_tiles <- function(year_range, n_cores = 1, in_dir, out_dir, mask, to_proj
       final <- lapply(tile_files, raster::raster) %>%
         do.call(merge, .)
 
-      library(snow)
+      requireNamespace(snow)
       beginCluster(n_cores)
 
       if(to_project == TRUE) {

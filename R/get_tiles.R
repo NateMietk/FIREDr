@@ -9,8 +9,9 @@
 
 get_tiles <- function(aoi_mask){
 
-  require(tidyverse)
-
+  requireNamespace(tidyverse)
+  requireNamespace(sf)
+  
   #Download the MODIS tile grid -------------------------
   dir.create("tmp", showWarnings = FALSE)
   dir_path <- file.path("tmp")

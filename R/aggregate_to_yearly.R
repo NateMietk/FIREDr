@@ -12,7 +12,7 @@
 # Future capabilities: Add custom date ranges for download
 
 aggreate_to_yearly <- function(tiles, n_cores = 1, year_range, in_dir, out_dir) {
-  require(parallel)
+  requireNamespace(parallel)
 
   cl <- parallel::makeCluster(n_cores)
   registerDoParallel(cl)
