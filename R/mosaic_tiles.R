@@ -10,7 +10,10 @@
 #     out_dir = The directory to house all the mosaiced tiles
 
 mosaic_tiles <- function(year_range, n_cores = 1, in_dir, out_dir, mask, to_project, projection, projected_resolution, projection_method) {
-
+  requireNamespace('snow')
+  requireNamespace('raster')
+  requireNamespace('tidyverse')
+  
   for (i in year_range) {
 
     if(!file.exists(paste0(out_dir,"/USA_", names, "_", i, ".tif"))){
@@ -19,7 +22,6 @@ mosaic_tiles <- function(year_range, n_cores = 1, in_dir, out_dir, mask, to_proj
       final <- lapply(tile_files, raster::raster) %>%
         do.call(merge, .)
 
-      requireNamespace(snow)
       beginCluster(n_cores)
 
       if(to_project == TRUE) {

@@ -12,12 +12,12 @@
 #
 
 convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, convert_zero_to_na = TRUE) {
-  requireNamespace(parallel)
-  requireNamespace(raster)
-  requireNamespace(stringr)
-  requireNamespace(gdalUtils)
-  requireNamespace(tidyverse)
-  requireNamespace(foreach)
+  requireNamespace('parallel')
+  requireNamespace('raster')
+  requireNamespace('stringr')
+  requireNamespace('gdalUtils')
+  requireNamespace('tidyverse')
+  requireNamespace('foreach')
   
   cl <- parallel::makeCluster(n_cores)
   doParallel::registerDoParallel(cl)
