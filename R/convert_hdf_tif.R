@@ -1,4 +1,4 @@
-convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, convert_zero_to_na = TRUE) {
+convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, convert_zero_to_na = TRUE, convert_date = TRUE) {
   requireNamespace('parallel')
   requireNamespace('raster')
   requireNamespace('stringr')
@@ -6,11 +6,7 @@ convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, co
   requireNamespace('tidyverse')
   requireNamespace('foreach')
   
-  cl <- parallel::makeCluster(n_cores)
-  doParallel::registerDoParallel(cl)
-  
-  foreach (j = 1:length(tiles), .packages = c('gdalUtils', 'tidyverse', 'raster', 'stringi')) %dopar% {
-    
+  for (j in unique(tiles)) {
     raw_dates <- function(input_raster, output = out_dir) {
       
       convert_to_julian <- function(y = year, day){
@@ -19,58 +15,59 @@ convert_hdf_tif <- function(tiles, in_dir, out_dir, n_cores = 1, layer_names, co
       
       year <- stringr::str_extract(input_raster, "\\d{4}")
       
-      month_range <- strsplit(input_raster, "\\_") %>%
-        lapply(`[`, 2) %>%
-        substr(6, 8)
-      
       if(convert_zero_to_na == TRUE) {
         mtrx <- matrix(c(-Inf, 1, NA, 367, Inf, NA), byrow=TRUE, ncol=3)
       } else {
         mtrx <- matrix(c(-Inf, 1, 0, 367, Inf, 0), byrow=TRUE, ncol=3)
       }
       
-      ras <- raster::raster(file.path(output, input_raster)) %>%
-        raster::reclassify(mtrx)  %>%
-        raster::calc(., fun = function(x) convert_to_julian(day = x))
+      ras <- raster::raster(input_raster)
+      if(convert_zero_to_na == TRUE) {
+        ras <- ras %>%
+          raster::calc(., fun = function(x) convert_to_julian(day = x)) %>%
+          raster::reclassify(., mtrx) 
+      } else {
+        ras <- ras %>%
+          raster::reclassify(., mtrx) 
+      }
       
-      writeRaster(ras, file.path(output, input_raster), format = "GTiff", overwrite=TRUE)
+      writeRaster(ras, input_raster, format = "GTiff", overwrite=TRUE)
     }
     
     # make list of all hdf files for the aoi and time range
-    hdfs <- list.files(in_dir, pattern = ".hdf",
-                       recursive = TRUE)
+    hdfs <- list.files(in_dir, pattern = paste(j),
+                       recursive = TRUE, full.names = TRUE)
     
     # split the native filename into a more readable format
-    filename <- strsplit(hdfs, "\\.") %>%
+    filename <- strsplit(basename(hdfs), "\\.") %>%
       lapply(`[`, 2:3) %>%
       lapply(paste, collapse = "_") %>%
       unlist
-    rm(hdfs)
     
     # create the final name to be written out
     outname <- paste0(layer_names, "_", filename, ".tif")
     
-    # make list of all hdf files and full path name
-    hdfs_full = list.files(in_dir, pattern = ".hdf",
-                           recursive = TRUE, full.names = TRUE)
-    for (i in 1:length(hdfs_full)) {
-      if(!file.exists(paste0(out_dir, "/", outname[i]))) {
+    cl <- parallel::makeCluster(n_cores)
+    doParallel::registerDoParallel(cl)
+    
+    foreach (i = 1:length(hdfs), .packages = c('gdalUtils', 'foreach')) %do% {
+        
+      out_file <- paste0(out_dir, "/", outname[i])
+      
+      if(!file.exists(out_file)) {
         
         # get the subdatasets from the hdf file
-        sds <- gdalUtils::get_subdatasets(hdfs_full[i])
+        sds <- gdalUtils::get_subdatasets(hdfs[i])
         
-        for (d in 1:length(layer_names)) {
+        foreach (d = 1:length(layer_names), .packages = c('gdalUtils','tidyverse', 'raster', 'stringr')) %dopar% {
           
           # unpack the subdatasets based on name stored in object d
-          gdalUtils::gdal_translate(sds[d], dst_dataset = paste0(out_dir, "/", outname[i]))
-          gdalUtils::gdal_translate(sds[1], dst_dataset = paste0(out_dir, "/", outname))
+          gdalUtils::gdal_translate(sds[d], dst_dataset = out_file)
           
-          
-          raw_dates(outname)
+          raw_dates(input_raster = out_file)
         }
       }
     }
-  }
-  
-  stopCluster(cl)
+    parallel::stopCluster(cl)
+  } 
 }
