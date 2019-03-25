@@ -9,42 +9,82 @@
 #     in_dir = Location of tiles to be mosaiced
 #     out_dir = The directory to house all the mosaiced tiles
 
-mosaic_tiles <- function(year_range, n_cores = 1, in_dir, out_dir, mask, to_project, projection, projected_resolution, projection_method) {
-  requireNamespace('snow')
-  requireNamespace('raster')
-  requireNamespace('tidyverse')
+mosaic_tiles <- function(in_dir, out_dir, mask, n_cores = 1, timescale, fun_stat = 'max') {
+  # requireNamespace('snow')
+  # requireNamespace('raster')
+  # requireNamespace('tidyverse')
+  # requireNamespace('foreach')
+  # requireNamespace('stringr')
   
-  for (i in year_range) {
-
-    if(!file.exists(paste0(out_dir,"/USA_", names, "_", i, ".tif"))){
-      tile_files = as.vector(Sys.glob(paste0(in_dir, "/", "*", i, ".tif")))
-
-      final <- lapply(tile_files, raster::raster) %>%
-        do.call(merge, .)
-
-      beginCluster(n_cores)
-
-      if(to_project == TRUE) {
-        final <- final %>%
-          raster::projectRaster(crs = projection,
-                                res = projected_resolution,
-                                method = projection_method) %>%
-          raster::crop(as(mask, 'Spatial')) %>%
-          raster::mask(as(mask, 'Spatial'))
-      } else {
-        final <- final %>%
-          raster::crop(as(mask, 'Spatial')) %>%
-          raster::mask(as(mask, 'Spatial'))
-      }
-      endCluster()
-
-      final[final < 1] <- NA
-      final[final > 366] <- NA
-
-      final_name <- paste0(out_dir,"/USA_", names, "_", i, ".tif")
-
-      raster::writeRaster(final, final_name, format = "GTiff", overwrite=TRUE)
-      gc()
-    }
+  # make list of all hdf files for the aoi and time range
+  hdfs <- list.files(in_dir, recursive = TRUE, full.names = TRUE)
+  
+  # split the native filename into a more readable format
+  filename <- strsplit(basename(hdfs), "\\.") %>%
+    lapply(`[`, 1) %>%
+    unlist
+  layer_name <- strsplit(filename, "_") %>%
+    lapply(`[`, 1) %>%
+    unlist
+  layer_name <- unique(layer_name)
+  
+  if(timescale == 'months') {
+    time_list <- unique(stringr::str_extract(filename, "\\d{7}")) 
+  } else {
+    time_list <- unique(stringr::str_extract(filename, "\\d{4}")) 
   }
+  
+  rename_months <- function(df) {
+    case_when(df == '001' ~ '01',
+              df == '032' ~ '02',
+              df == '060' ~ '03',
+              df == '061' ~ '03',
+              df == '091' ~ '04',
+              df == '092' ~ '04',
+              df == '121' ~ '05',
+              df == '122' ~ '05',
+              df == '152' ~ '06',
+              df == '153' ~ '06',
+              df == '182' ~ '07',
+              df == '183' ~ '07',
+              df == '213' ~ '08',
+              df == '214' ~ '08',
+              df == '244' ~ '09',
+              df == '245' ~ '09',
+              df == '274' ~ '10',
+              df == '275' ~ '10',
+              df == '305' ~ '11',
+              df == '306' ~ '11',
+              df == '335' ~ '12',
+              df == '336' ~ '12',
+              TRUE ~ as.character(df))
+  }
+  
+  cl <- parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
+  
+  foreach::foreach (j = time_list, .packages = c('raster', 'tidyverse')) %dopar% {
+    
+    file_list <- list.files(in_dir, pattern = paste(j), 
+                            recursive = TRUE, full.names = TRUE)
+    
+    if(!file.exists(file.path(out_dir, paste0(layer_name, "_", j, ".tif")))) {
+      
+      out_raster <- lapply(file_list, raster::raster) %>%
+        do.call(merge, .)
+      
+      if(timescale == 'years') {
+        out_raster <- raster::stack(tile_files) %>%
+          raster::calc(., fun = fun_stat)
+        out_filename <- j
+      } else {
+        out_filename <- paste0(unique(str_sub(j, 1, 4)), '_', rename_months(unique(str_sub(j, 5, 7))))
+      }
+      
+      out_name <- file.path(out_dir, paste0(layer_name, "_", out_filename, ".tif"))
+      raster::writeRaster(out_raster, out_name, format = "GTiff")
+    }
+    gc()
+  }
+  parallel::stopCluster(cl)
 }
